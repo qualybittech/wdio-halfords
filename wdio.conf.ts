@@ -11,15 +11,15 @@ let env = process.argv[6]
 
 switch (env) {
   case 'staging':
-    baseUrl = 'https://www.halfords.com';
+    baseUrl = 'https://www.halfords.com/?_wt.mode=staging';
     break;
 
   case 'stagingalt':
-    baseUrl = 'https://www.halfords.com';
+    baseUrl = 'https://www.halfords.com/?_wt.mode=staging';
     break;
 
   default:
-    baseUrl = 'https://www.halfords.com';
+    baseUrl = 'https://www.halfords.com/?_wt.mode=staging';
     
     break;
 }

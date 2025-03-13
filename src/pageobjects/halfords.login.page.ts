@@ -8,7 +8,12 @@ class HalfordsLoginPage extends Page {
     /**
      * define selectors using getter methods
      */
-    
+
+
+    public get account() {
+        return $('//span[normalize-space()="Account"]');
+    }
+
     public get cookies() {
         return $('//button[@id="onetrust-accept-btn-handler"]');
     }
@@ -40,14 +45,16 @@ class HalfordsLoginPage extends Page {
 
     public async cookie(){
        await browser.pause(3000)
-       await this.cookies.waitForDisplayed();
+      // await this.cookies.waitForDisplayed();
        await browser.keys('Tab');
        await browser.keys('Tab');
        await browser.keys('Enter');
-       //await this.cookies.click();
+       await browser.pause(2000)
+
     }
 
     public async halfordsLogin (email: string, password: string) {
+            await browser.url("/login?rurl=1")
             await this.inputEmail.setValue(email);
             await this.inputPassword.setValue(password);
             await this.btnSubmit.click();

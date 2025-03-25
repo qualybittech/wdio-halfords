@@ -28,8 +28,8 @@ class HalfordsAddToCartPage extends Page {
         return $('//input[@placeholder="Search"]');
     }
 
-    public get addToCart() {
-        return $('//div[@class="b-product__details b-product__details--compare b-product__list--hidden"]//button[normalize-space()="Add to Basket"]');
+    public async addToCart(value){
+        return $('//div[@class="b-product__details b-product__details--compare b-product__list--hidden"]//button[normalize-space()="Add to Basket" and @data-product-name="'+value+'"]')
     }
 
     public async feature(value){
@@ -97,7 +97,7 @@ class HalfordsAddToCartPage extends Page {
     public async  halfordsAddToCart(product,size,color,location) {
        await this.search.setValue(product);
         await this.searchButton.click();
-        await this.addToCart.click();
+        (await this.addToCart(product)).click();
         await $('//a[@data-display-value="'+size+'"]').click();
         await browser.pause(2000)      
         await $('//a[@data-display-value="'+color+'"]').click();
@@ -105,8 +105,19 @@ class HalfordsAddToCartPage extends Page {
         await this.location.setValue(location);
         await browser.pause(1000)      
         await this.locationFirst.click();
-        await this.addCart.click();
-    }
+        await browser.pause(4000)  
+        await browser.keys('Tab')
+        await browser.keys('Tab')
+        await browser.keys('Tab')
+        await browser.keys('Tab')
+        await browser.keys('Tab')
+        await browser.keys('Tab')  
+        await browser.keys('Tab')
+        await browser.keys('Tab')
+        await browser.keys('Enter')
+        //await this.addCart.click();
+        await browser.pause(2000)  
+   }
     
     public async  halfordsBasket(product) {
         await this.cart.click();
@@ -127,8 +138,11 @@ class HalfordsAddToCartPage extends Page {
          await this.locationPdp.setValue(location);
          await browser.pause(1000)      
          await this.locationFirst.click();
-         await browser.pause(1000)      
-         await this.addCartPdp.click();
+         await browser.pause(4000) 
+         await browser.keys('Tab')  
+         await browser.keys('Enter')  
+         await browser.pause(1000)         
+         //await this.addCartPdp.click();
      }
 
      public async  halfordsAddToCartBatteries(product,vrn,code,location) {

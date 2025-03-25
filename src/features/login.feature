@@ -1,6 +1,6 @@
 Feature: Halford application tests for login
 
-  @Halfords
+  @Halfords @login
   Scenario Outline: As a customer user I can log into the halfords application
 
     Given I am on the halfords website home page

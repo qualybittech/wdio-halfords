@@ -304,11 +304,14 @@ export const config: Options.Testrunner = {
     // },
     afterStep: async function (step, scenario, { error, duration, passed }, context) {
         if (error) {
-          //await browser.takeScreenshot();
+          const screenshot = await browser.takeScreenshot();
           // const screenshot = await browser.saveScreenshot('./output/' + Date.now() + '.png');
           //console.log('Screenshot path:', screenshot);
           await cucumberJson.attach('just a second string', 'text/plain');
-          await cucumberJson.attach(await browser.takeScreenshot(), 'image/png');
+          await cucumberJson.attach(await screenshot, 'image/png');
+        }else{
+          const screenshot = await browser.takeScreenshot();
+          await cucumberJson.attach(await screenshot, 'image/png');
         }
       },
     /**
@@ -369,6 +372,9 @@ export const config: Options.Testrunner = {
     // onComplete: function(exitCode, config, capabilities, results) {
     // },
     onComplete: () => {
+        //const reportError = new Error('Could not generate Allure report')
+        //const generation = allure(['generate', 'allure-results', '--clean'])
+      
         // Generate the report when it all tests are done
         generate({
           // Required
@@ -377,6 +383,18 @@ export const config: Options.Testrunner = {
           jsonDir: '.tmp/json/',
           reportPath: '.tmp/report/',
           // for more options see https://github.com/wswebcreation/multiple-cucumber-html-reporter#options
+          customData: {
+            title: '<img src="https://c.webtrends-optimize.com/acs/accounts/82cb087b-998c-4b84-adea-c4c6f90d5d6f/manager/logo.jpg" width="200" />',
+            data: [
+            //{ label: 'WebTrends Optimize', value: '<img src="https://c.webtrends-optimize.com/acs/accounts/82cb087b-998c-4b84-adea-c4c6f90d5d6f/manager/logo.jpg" width="500" />' },
+            { label: 'Organisation', value: 'Webtrends Optimize' },
+            { label: 'Project', value: 'Halford Tag update regression checks' },
+            { label: 'Tester', value: 'Louvina' }, //Change the tester name
+            //{ label: 'Total Tests', value: '' },
+            { label: 'Execution Time', value: new Date().toLocaleString() },
+            { label: 'Test Framwork Used', value: 'WebdriverIO, Cucumber' },
+            { label: 'Operating System & Architecture', value: 'Windows 11, x64' }
+            ]},
         });
       }
     /**

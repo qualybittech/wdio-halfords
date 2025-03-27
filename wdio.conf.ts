@@ -2,7 +2,8 @@ import type { Options } from '@wdio/types'
 import cucumberJson from 'wdio-cucumberjs-json-reporter';
 import { generate } from 'multiple-cucumber-html-reporter'
 import fs from 'node:fs/promises'
-
+import { JSDOM } from "jsdom";
+import * as path from 'node:path';
 
 let baseUrl;
 global.isRequired;
@@ -371,7 +372,7 @@ export const config: Options.Testrunner = {
      */
     // onComplete: function(exitCode, config, capabilities, results) {
     // },
-    onComplete: () => {
+    onComplete: async () => {
         //const reportError = new Error('Could not generate Allure report')
         //const generation = allure(['generate', 'allure-results', '--clean'])
       
@@ -384,18 +385,19 @@ export const config: Options.Testrunner = {
           reportPath: '.tmp/report/',
           // for more options see https://github.com/wswebcreation/multiple-cucumber-html-reporter#options
           customData: {
-            title: '<img src="https://c.webtrends-optimize.com/acs/accounts/82cb087b-998c-4b84-adea-c4c6f90d5d6f/manager/logo.jpg" width="200" />',
+            title: 'Test Results',
             data: [
             //{ label: 'WebTrends Optimize', value: '<img src="https://c.webtrends-optimize.com/acs/accounts/82cb087b-998c-4b84-adea-c4c6f90d5d6f/manager/logo.jpg" width="500" />' },
             { label: 'Organisation', value: 'Webtrends Optimize' },
-            { label: 'Project', value: 'Halford Tag update regression checks' },
+            { label: 'Project', value: 'Halford Regression Tests' },
             { label: 'Tester', value: 'Louvina' }, //Change the tester name
-            //{ label: 'Total Tests', value: '' },
             { label: 'Execution Time', value: new Date().toLocaleString() },
+            { label: 'Browsers', value: 'Chrome' },
             { label: 'Test Framwork Used', value: 'WebdriverIO, Cucumber' },
             { label: 'Operating System & Architecture', value: 'Windows 11, x64' }
             ]},
         });
+        await processHtmlFile('.tmp/report');
       }
     /**
     * Gets executed when a refresh happens.
@@ -404,4 +406,168 @@ export const config: Options.Testrunner = {
     */
     // onReload: function(oldSessionId, newSessionId) {
     // }
+}
+
+async function processHtmlFile(dirReportPath: string): Promise<void> {
+
+    const dasboardHTML = dirReportPath+"/index.html";
+    // Read the HTML file 
+    const htmlContentDashboard =await fs.readFile(dasboardHTML, "utf-8");
+    const files = await fs.readdir(dirReportPath+"/features");
+
+    // Find the first HTML file (For scenarios report)
+    const htmlFile = files.find((file: string) => file.endsWith(".html"));
+
+    // Construct the full file path
+    const filePathFeature = path.join(dirReportPath+"/features", htmlFile);
+
+    // Read the HTML file
+    const htmlContentFeature = await fs.readFile(filePathFeature, "utf-8");
+
+    // Load the HTML content into jsdom
+    const domDashboard = new JSDOM(htmlContentDashboard);
+    const documentDashboard = domDashboard.window.document;
+
+    // Load the HTML content into jsdom
+    const domFeature = new JSDOM(htmlContentFeature);
+    const documentFeature = domFeature.window.document;
+
+    // Select the elements from the dashboard
+    const rowElementsDashboard = documentDashboard.querySelectorAll(".row");
+    const elementsDashboard = rowElementsDashboard[0].querySelectorAll(".col-lg-4.col-xs-12");
+    const sourceElementDashboard = elementsDashboard[2];
+    const targetElementDashboard = elementsDashboard[0];
+
+
+    //For Header
+    const containerFluidElementDashboard = documentDashboard.querySelector(".container-fluid");
+    //For Footer
+    const createdByElementDashboard = documentDashboard.querySelector(".created-by");
+
+    //Add Logo image to header
+    if (containerFluidElementDashboard) {
+        // Replace the <div class="container-fluid"> section with the <img> section
+        const imgElement = documentDashboard.createElement("img");
+        imgElement.src = "https://c.webtrends-optimize.com/acs/accounts/82cb087b-998c-4b84-adea-c4c6f90d5d6f/manager/logo.jpg";
+        imgElement.width = 200;
+        containerFluidElementDashboard.appendChild(imgElement); 
+        //containerFluidElementDashboard.replaceWith(imgElement);
+        // Write the updated HTML back to the file
+        console.log("Section replaced successfully.");
+    } else {
+        console.error('<div class="container-fluid"> section not found.');
+    }
+
+    // Move the Custom tags section to Left side
+    if (sourceElementDashboard && targetElementDashboard && rowElementsDashboard[0]) {
+        // Move the source element above the target element
+        rowElementsDashboard[0].insertBefore(sourceElementDashboard, targetElementDashboard);
+        //console.log(rowElements[0]);
+        console.log("Section moved successfully.");
+    } else {
+        console.error("Source or target element not found.");
+    }
+
+    const footerCopyRightDiv = `<div Style="text-align:center;padding:10px;font-size:14px;">
+    <p>Webtrends Optimize</p>
+    </p>2025 Copyright Accelarate Group Ltd t/a Webtrends Otimize </p>
+    </p>All right reserved.Lwarence House, 45 High Street, Egham, TW20 9DP </p>
+    </div>`;
+
+    // Update footer section with copyright notes
+      if (createdByElementDashboard) {
+        // Replace the createdByElementDashboard section with the footerCopyRightDiv
+        const footerDiv = documentDashboard.createElement("div");
+        footerDiv.innerHTML = footerCopyRightDiv;
+    
+        createdByElementDashboard.replaceWith(footerDiv);
+        console.log("Footer section replaced successfully.");
+    } else {
+        console.error('<div class="created-by"> section not found.');
+    }
+    // Write the updated HTML back to the file
+    await fs.writeFile(dasboardHTML, domDashboard.serialize(), "utf-8");
+
+    //*********Modifying the scenario html contents***********//
+
+    //Exract the chart function from the dashboard HTML
+    const scriptTags = documentDashboard.querySelectorAll("script");
+    let chartFunction = "";
+    scriptTags.forEach((script) => {
+      if (script.textContent?.includes('new Chart(document.getElementById("feature-chart")')) {
+        const match = script.textContent.match(/new Chart\(document\.getElementById\("feature-chart"\),[\s\S]*?\}\);/);
+               if (match) {
+              chartFunction = match[0];
+            }
+        }
+    });
+
+    // Append the additional script to the chartFunction
+    const additionalScript = `
+    var featureOptions = {
+        legend: false,
+        responsive: false
+    };
+    var getColor = function(selector, defaultColor) {
+        if (document.querySelector(selector)) {
+            return getComputedStyle(document.querySelector(selector)).color;
+        }
+        return defaultColor;
+    };`;
+
+  chartFunction = `${additionalScript}\n\n${chartFunction}`;
+
+    if (!chartFunction) {
+        console.error("Chart function not found in the source file.");
+        return;
+    }
+    
+    //console.log("Chart function extracted successfully."+chartFunction);
+
+    //Select the elements from the feature file                                                                                                   
+    const rowElementsFeature = documentFeature.querySelectorAll(".row");
+    const elementsFeature = rowElementsFeature[0];
+    const containerFluidElementFeature = documentFeature.querySelector(".container-fluid");
+    elementsFeature.replaceWith(rowElementsDashboard[0]);
+    const scriptTagsFeatures = documentFeature.querySelectorAll("script");
+    const createdByElementFeature = documentFeature.querySelector(".created-by");
+
+    // Append the chart function for Featureschart in scenarios html page
+            scriptTagsFeatures.forEach((script) => {
+              if (script.textContent?.includes("$(document).ready(function ()")) {
+                  // Append the chart function under the first $(document).ready(function ()
+                  script.textContent = script.textContent.replace(
+                      "$(document).ready(function () {",
+                      `$(document).ready(function () {\n\n${chartFunction}\n`
+                  );
+              }
+          });
+
+    // Copy the Dasboard contents to scenarios HTML
+    if (containerFluidElementFeature) {
+      // Replace the <div class="container-fluid"> section with the <img> section
+      const imgElement = documentFeature.createElement("img");
+      imgElement.src = "https://c.webtrends-optimize.com/acs/accounts/82cb087b-998c-4b84-adea-c4c6f90d5d6f/manager/logo.jpg";
+      imgElement.width = 200;
+      containerFluidElementFeature.appendChild(imgElement);
+      //containerFluidElementFeature.replaceWith(imgElement2);
+      // Write the updated HTML back to the file
+      console.log("Section replaced successfully.");
+  } else {
+      console.error('<div class="container-fluid"> section not found.');
+  }
+  
+  // Update copyrights to the footer section
+    if (createdByElementFeature) {
+      // Replace the createdByElementDashboard section with the footerCopyRightDiv
+      const footerDiv = documentFeature.createElement("div");
+      footerDiv.innerHTML = footerCopyRightDiv;
+
+      createdByElementFeature.replaceWith(footerDiv);
+      console.log("Footer section replaced successfully.");
+  } else {
+      console.error('<div class="created-by"> section not found.');
+  }
+
+    await fs.writeFile(filePathFeature, domFeature.serialize(), "utf-8");
 }

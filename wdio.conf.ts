@@ -25,7 +25,51 @@ switch (env) {
     break;
 }
 
+const RUN_ENV = process.env.RUN_ENV || 'local';
+
+let capabilities: any[];
+let services: any[];
+
+if (RUN_ENV === 'local') {
+    capabilities = [
+        {
+            browserName: 'chrome',
+        }
+    ];
+    services = [];
+} else {
+    capabilities = [
+        {
+           // browserName: 'chrome',
+            'bstack:options': {
+                projectName: 'WebdriverIO tests',
+                os: 'Windows',
+                osVersion: '11',
+                buildName: 'WDIO-BrowserStack',
+                sessionName: 'Chrome Win11',
+            }
+        },
+        // Add more BrowserStack capabilities here if needed
+    ];
+    services = //['browserstack'];
+    [['browserstack', {
+        accessibility: true,
+        accessibilityOptions: {
+          'wcagVersion': 'wcag21a',
+          'includeIssueType': {
+            'bestPractice': false,
+            'needsReview': true
+          },
+        },
+    }]]
+}
+
 export const config: Options.Testrunner = {
+
+    user: process.env.BROWSERSTACK_USERNAME || '',
+    key: process.env.BROWSERSTACK_ACCESS_KEY || '',
+    capabilities,
+    services,
     //
     // ====================
     // Runner Configuration
@@ -85,9 +129,15 @@ export const config: Options.Testrunner = {
     // Sauce Labs platform configurator - a great tool to configure your capabilities:
     // https://saucelabs.com/platform/platform-configurator
     //
-    capabilities: [{
-        browserName: 'chrome'
-    }],
+   /* capabilities: [{
+        browserName: 'chrome',
+            'bstack:options': {
+                os: 'Windows',
+                osVersion: '11',
+                buildName: 'WDIO-BrowserStack',
+                sessionName: 'Chrome Win11',
+            }
+    }],*/
 
     //
     // ===================
@@ -138,6 +188,9 @@ export const config: Options.Testrunner = {
     // your test setup with almost no effort. Unlike plugins, they don't add new
     // commands. Instead, they hook themselves up into the test process.
     // services: [],
+       /* services: [
+        'browserstack'
+        ],*/
     //
     // Framework you want to run your specs with.
     // The following are supported: Mocha, Jasmine, and Cucumber
@@ -187,7 +240,7 @@ export const config: Options.Testrunner = {
         // <string> (expression) only execute the features or scenarios with tags matching the expression
         tagExpression: '',
         // <number> timeout for step definitions
-        timeout: 60000,
+        timeout: 100000,
         // <boolean> Enable this config to treat undefined definitions as warnings.
         ignoreUndefinedDefinitions: false
     },

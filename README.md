@@ -28,3 +28,7 @@ npm run wdio
 * Defalut environment would be staging to run on other environments :
 * npm run wdio "@test" staging
 * npm run wdio "@test" stagingalt
+
+* To run with Browser stack:
+* Update the User and API key in wdio.config
+* RUN_ENV = Browserstack
